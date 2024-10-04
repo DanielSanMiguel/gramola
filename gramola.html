@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GramolaDanielSan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            
+        }
+        .contenedor {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #666, #999);
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #fileInput {
+            margin-bottom: 20px;
+        }
+
+        #imageBox {
+            width: 200px;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 20px;
+            border: 1px solid #000;
+        }
+
+        #playlist {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #playlist li {
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        #playlist li.playing {
+            font-weight: bold;
+            color: green;
+        }
+
+        #controls {
+            display: flex;
+            justify-content:space-evenly ;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            background-color: #5555;
+            color: #ccc;
+            margin: 10px;
+        }
+
+        #audioPlayer {
+            width: 100%;
+            margin-top: 20px;
+        }
+        h1 {
+            font-family: prompt;
+            color: #113;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Gramola de Daniel San</h1>
+
+            <!-- Récuadro para mostrar las imágenes -->
+            <div id="imageBox"></div>
+        
+            <input type="file" id="fileInput" multiple accept="audio/*,image/*">
+            
+            <ul id="playlist"></ul>
+        
+            <div id="controls">
+                <button id="prevTrack">Anterior</button>
+                <button id="nextTrack">Siguiente</button>
+            </div>
+        
+            <audio id="audioPlayer" controls></audio>
+    </div>
+
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const playlist = document.getElementById('playlist');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const prevButton = document.getElementById('prevTrack');
+        const nextButton = document.getElementById('nextTrack');
+        const imageBox = document.getElementById('imageBox');
+
+        let tracks = [];
+        let images = [];
+        let currentTrack = 0;
+        let currentImage = 0;
+
+        fileInput.addEventListener('change', function(event) {
+            const files = Array.from(event.target.files);
+            playlist.innerHTML = '';
+            tracks = [];
+            images = [];
+
+            files.forEach((file, index) => {
+                const fileType = file.type.split('/')[0];
+                
+                if (fileType === 'audio') {
+                    // Si es un archivo de audio, lo agregamos a la lista de reproducción
+                    tracks.push(file);
+                    const listItem = document.createElement('li');
+                    listItem.textContent = file.name;
+                    listItem.dataset.index = index;
+                    playlist.appendChild(listItem);
+                } else if (fileType === 'image') {
+                    // Si es una imagen, la agregamos a la lista de imágenes
+                    images.push(file);
+                }
+            });
+
+            // Reproduce la primera canción al cargar la lista
+            if (tracks.length > 0) {
+                loadTrack(0);
+            }
+
+            // Si hay imágenes, establece la primera en el recuadro
+            if (images.length > 0) {
+                setImage(0);
+            }
+        });
+
+        function loadTrack(index) {
+            if (index >= 0 && index < tracks.length) {
+                const track = tracks[index];
+                const url = URL.createObjectURL(track);
+                audioPlayer.src = url;
+                audioPlayer.play();
+                highlightPlayingTrack(index);
+            }
+        }
+
+        function highlightPlayingTrack(index) {
+            const allItems = playlist.querySelectorAll('li');
+            allItems.forEach(item => item.classList.remove('playing'));
+            allItems[index].classList.add('playing');
+        }
+
+        audioPlayer.addEventListener('ended', function() {
+            nextTrack();
+        });
+
+        function nextTrack() {
+            currentTrack++;
+            if (currentTrack >= tracks.length) {
+                currentTrack = 0; // Reinicia la lista cuando llega al final
+            }
+            loadTrack(currentTrack);
+            // Cambia la imagen en el recuadro al avanzar de pista
+            if (images.length > 0) {
+                setImage((currentImage + 1) % images.length);
+            }
+        }
+
+        function prevTrack() {
+            currentTrack--;
+            if (currentTrack < 0) {
+                currentTrack = tracks.length - 1; // Va al último track si está en el primero
+            }
+            loadTrack(currentTrack);
+            // Cambia la imagen en el recuadro al retroceder de pista
+            if (images.length > 0) {
+                setImage((currentImage - 1 + images.length) % images.length);
+            }
+        }
+
+        nextButton.addEventListener('click', nextTrack);
+        prevButton.addEventListener('click', prevTrack);
+
+        playlist.addEventListener('click', function(event) {
+            if (event.target.tagName === 'LI') {
+                currentTrack = parseInt(event.target.dataset.index);
+                loadTrack(currentTrack);
+            }
+        });
+
+        function setImage(index) {
+            if (index >= 0 && index < images.length) {
+                const imageFile = images[index];
+                const url = URL.createObjectURL(imageFile);
+                imageBox.style.backgroundImage = `url(${url})`;
+                currentImage = index;
+            }
+        }
+
+    </script>
+</body>
+</html>
